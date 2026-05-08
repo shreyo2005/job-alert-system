@@ -1,3 +1,8 @@
+const dotenv = require("dotenv");
+
+dotenv.config();
+
+
 const app = require("./src/app");
 
 const main = require("./src/config/db");

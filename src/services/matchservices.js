@@ -1,79 +1,98 @@
+const normalizeSkill = (skill) => {
+
+    return skill
+        .toLowerCase()
+        .replace(".js", "")
+        .replace("nodejs", "node")
+        .replace("reactjs", "react")
+        .replace("mongo db", "mongodb")
+        .replace("express js", "express")
+        .replace("next js", "nextjs")
+        .trim();
+};
+
 const getMatchedJobs = (user, jobs) => {
 
     const matchedjobs = jobs.map(job => {
 
         let score = 0;
 
-        const userskills = user.skills.map(skill =>
-            skill.toLowerCase()
+        // normalize user skills
+        const userskills = (user.skills || []).map(skill =>
+            normalizeSkill(skill)
         );
 
-        const jobskills = job.skillsrequired.map(skill =>
-            skill.toLowerCase()
+        // normalize job skills
+        const jobskills = (job.skillsrequired || []).map(skill =>
+            normalizeSkill(skill)
         );
 
+        // direct skill matching
         const matchedskills = jobskills.filter(skill =>
             userskills.includes(skill)
         );
 
-        // skill score
-        score = score + matchedskills.length * 10;
+        // score from matched skills
+        score += matchedskills.length * 10;
+
+        // fallback matching from description
+        if (
+            matchedskills.length === 0 &&
+            job.description
+        ) {
+
+            userskills.forEach(skill => {
+
+                if (
+                    job.description
+                        .toLowerCase()
+                        .includes(skill)
+                ) {
+
+                    matchedskills.push(skill);
+
+                    score += 5;
+                }
+            });
+        }
 
         // location score
         if (
             user.location &&
             job.location &&
-            user.location.toLowerCase() ===
-            job.location.toLowerCase()
+            (
+                user.location
+                    .toLowerCase()
+                    .includes(job.location.toLowerCase()) ||
+
+                job.location
+                    .toLowerCase()
+                    .includes(user.location.toLowerCase())
+            )
         ) {
-            score = score + 20;
+
+            score += 20;
         }
 
-        // experience score
-        if (
-            user.experience >= job.requiredExperience
-        ) {
-            score = score + 15;
-        }
-
-        // salary score
-        if (
-            user.expectedSalary &&
-            job.salary &&
-            job.salary >= user.expectedSalary
-        ) {
-            score = score + 10;
-        }
-
-        // education score
-        if (
-            user.education &&
-            job.education &&
-            user.education.toLowerCase() ===
-            job.education.toLowerCase()
-        ) {
-            score = score + 10;
-        }
+        // DEBUG LOGS
+        console.log("JOB:", job.name);
+        console.log("USER SKILLS:", userskills);
+        console.log("JOB SKILLS:", jobskills);
+        console.log("MATCHED:", matchedskills);
+        console.log("SCORE:", score);
+        console.log("--------------------");
 
         return {
-            ...job.toObject(),
+            ...(job.toObject ? job.toObject() : job),
             matchScore: score,
             matchedskills
         };
 
     });
 
-    // remove low score jobs
-    const filteredjobs = matchedjobs.filter(
-        job => job.matchScore > 0
-    );
-
-    // sort descending
-    filteredjobs.sort(
-        (a, b) => b.matchScore - a.matchScore
-    );
-
-    return filteredjobs;
+    return matchedjobs
+        .filter(job => job.matchScore > 0)
+        .sort((a, b) => b.matchScore - a.matchScore);
 };
 
 module.exports = getMatchedJobs;

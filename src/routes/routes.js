@@ -5,14 +5,14 @@ const {
     createuser,
     getuserbyid,
     getusers,
-    //deleteuser
+    deleteuser
 }=require("../controllers/User.js");
 
 router.post("/user",createuser);
 router.get("/users",getusers);
 router.get("/user/:id",getuserbyid);
 
-router.delete("/user/:id",getuserbyid);
+router.delete("/user/:id",deleteuser);
 
 
 //routes for the jobs
