@@ -1,58 +1,23 @@
-import { useEffect, useState } from "react";
-import axios from "axios";
-import JobCard from "./components/JobCard";
+import { useState } from "react";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
 import "./index.css";
 
-function App() {
+function AppContent() {
+  const { user } = useAuth();
+  const [showRegister, setShowRegister] = useState(false);
 
-  const [jobs, setJobs] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-
-    const fetchJobs = async () => {
-
-      try {
-
-        const response = await axios.get(
-          "http://localhost:3000/job/match/69fe1169c40859a2ae2dee11"
-        );
-
-        setJobs(response.data.matchedjobs);
-
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchJobs();
-
-  }, []);
-
-  return (
-    <div className="container">
-
-      <h1 className="title">
-        AI Job Matching System
-      </h1>
-
-      {loading ? (
-        <h2>Loading...</h2>
-      ) : (
-
-        <div className="jobs-grid">
-
-          {jobs.map(job => (
-            <JobCard key={job._id} job={job} />
-          ))}
-
-        </div>
-      )}
-
-    </div>
-  );
+  if (user) return <Dashboard />;
+  if (showRegister) return <Register onSwitch={() => setShowRegister(false)} />;
+  return <Login onSwitch={() => setShowRegister(true)} />;
 }
 
-export default App;
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+}
